@@ -1,0 +1,5 @@
+streamlit
+tkinterdnd2
+jaconv
+sudachipy
+pywin32
