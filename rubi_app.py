@@ -8,7 +8,7 @@ from pathlib import Path
 from sudachipy import tokenizer, dictionary
 
 # Sudachi初期化
-tokenizer_obj = dictionary.Dictionary().create()
+tokenizer_obj = dictionary.Dictionary(dict_type="core").create()
 mode = tokenizer.Tokenizer.SplitMode.C
 
 # override辞書の読み込み
@@ -101,3 +101,4 @@ if uploaded_file:
         new_dict = {item["word"]: item["reading"] for item in edited_dict if item["word"] and item["reading"]}
         save_override_dict(new_dict)
         st.success("辞書を保存しました")
+
