@@ -68,24 +68,31 @@ st.title("📘 ルビ編集ツール（Streamlit版）")
 
 override_dict = load_override_dict()
 
-uploaded_file = st.file_uploader("Wordファイルをアップロード", type=["docx"])
-if uploaded_file:
-    file_bytes = uploaded_file.read()
-    temp_path = Path("temp.docx")
-    with open(temp_path, "wb") as f:
-        f.write(file_bytes)
+uploaded_files = st.file_uploader("Wordファイルをアップロード（複数可）", type=["docx"], accept_multiple_files=True)
 
-    terms = extract_terms(temp_path, override_dict)
-    st.success(f"{len(terms)} 件の語句を抽出しました")
+if uploaded_files:
+    for i, uploaded_file in enumerate(uploaded_files):
+        st.markdown(f"### 📄 {uploaded_file.name}")
 
-    edited_terms = st.data_editor(
-        terms,
-        column_config={
-            "word": "語句",
-            "reading": "読み"
-        },
-        num_rows="dynamic"
-    )
+        file_bytes = uploaded_file.read()
+        temp_path = Path(f"temp_{i}.docx")  # 一時ファイル名をユニークに
+
+        with open(temp_path, "wb") as f:
+            f.write(file_bytes)
+
+        terms = extract_terms(temp_path, override_dict)
+        st.success(f"{len(terms)} 件の語句を抽出しました")
+
+        edited_terms = st.data_editor(
+            terms,
+            column_config={
+                "word": "語句",
+                "reading": "読み"
+            },
+            num_rows="dynamic",
+            key=f"editor_{i}"  # 複数エディタにユニークキーを
+        )
+
 
     if st.button("📄 TSV保存"):
         tsv_path = save_tsv(edited_terms, uploaded_file.name)
@@ -101,4 +108,5 @@ if uploaded_file:
         new_dict = {item["word"]: item["reading"] for item in edited_dict if item["word"] and item["reading"]}
         save_override_dict(new_dict)
         st.success("辞書を保存しました")
+
 
