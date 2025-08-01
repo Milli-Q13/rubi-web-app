@@ -239,7 +239,6 @@ class RubyEditorApp:
 
         messagebox.showinfo("保存完了", f"TSVファイルを保存しました：\n{tsv_path}")
 
-
     def load_override_dict(self):
         if os.path.exists("override.json"):
             with open("override.json", "r", encoding="utf-8") as f:
@@ -480,4 +479,5 @@ if __name__ == "__main__":
     root = TkinterDnD.Tk()
     app = RubyEditorApp(root)
     root.mainloop()
+
 
