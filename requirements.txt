@@ -1,4 +1,7 @@
 streamlit
 jaconv
 sudachipy
+sudachipy
+sudachidict_core
+
 
