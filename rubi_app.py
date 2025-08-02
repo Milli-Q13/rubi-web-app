@@ -3,7 +3,7 @@ from pathlib import Path
 import os
 import json
 import pandas as pd
-from RubiGUI3 import extract_terms
+from rubi_core import extract_terms
 
 st.title("語句抽出＆TSV出力ツール（複数ファイル対応）")
 
