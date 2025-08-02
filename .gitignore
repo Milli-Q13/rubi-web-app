@@ -1,0 +1,3 @@
+# Python キャッシュファイルを無視
+__pycache__/
+*.pyc
