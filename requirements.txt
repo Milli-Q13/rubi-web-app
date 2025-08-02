@@ -1,3 +1,6 @@
 streamlit
 jaconv
 sudachipy
+sudachipy
+sudachidict_full
+
