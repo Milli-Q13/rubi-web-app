@@ -30,10 +30,13 @@ elif default_dict_path.exists():
 
 # ✏️ 辞書編集UI（読み込み後に表示）
 st.subheader("📝 辞書の編集")
-edited_dict = pd.DataFrame(
-    [{"語句": k, "読み": v} for k, v in override_dict.items()]
-)
-edited_df = st.data_editor(edited_dict, num_rows="dynamic")
+
+# override_dict（辞書）を DataFrame に変換
+df = pd.DataFrame([{"語句": k, "読み": v} for k, v in override_dict.items()])
+
+# 編集可能なテーブルとして表示
+edited_df = st.data_editor(df, num_rows="dynamic")
+
 
 # 💾 保存ボタン
 if st.button("辞書を保存（override.json に上書き）"):
@@ -69,7 +72,15 @@ if uploaded_files:
         for term in terms:
             st.write(f"・{term.get('word', '')} → {term.get('reading', '')}")
 
-        # TSV生成
+        # ✏️ 編集UIを追加
+        st.write("✏️ 抽出語句の編集")
+        df_terms = pd.DataFrame(terms)
+        edited_terms = st.data_editor(df_terms, num_rows="dynamic")
+
+        # 編集結果を terms に反映（以降の処理に使う）
+        terms = edited_terms.to_dict(orient="records")
+
+        # TSV生成（編集後の terms を使用）
         tsv_path = str(temp_path).replace(".docx", ".tsv")
         with open(tsv_path, "w", encoding="cp932") as f:
             for term in terms:
