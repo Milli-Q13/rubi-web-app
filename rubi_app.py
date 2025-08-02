@@ -4,13 +4,14 @@ import os
 import json
 import pandas as pd
 from rubi_core import extract_terms
+import subprocess
 
 st.title("語句抽出＆TSV出力ツール（複数ファイル対応）")
+subprocess.run(["sudachipy", "link", "-t", "full"])
 
 # 📚 辞書の読み込み（アップロード or 既存ファイル）
 override_dict = {}
 default_dict_path = Path(__file__).parent / "override.json"
-
 uploaded_dict_file = st.file_uploader("📚 ルビ辞書（override.json）をアップロード", type=["json"])
 
 if uploaded_dict_file:

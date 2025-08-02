@@ -1,5 +1,6 @@
 from sudachipy import tokenizer, dictionary
 import jaconv
+from sudachipy import dictionary
 
 def extract_terms(file_path, override_dict):
     import zipfile
@@ -7,7 +8,7 @@ def extract_terms(file_path, override_dict):
     from sudachipy import tokenizer, dictionary
     import jaconv
 
-    tokenizer_obj = dictionary.Dictionary().create()
+    tokenizer_obj = dictionary.Dictionary(dict_type="full").create()
     mode = tokenizer.Tokenizer.SplitMode.C
 
     with zipfile.ZipFile(file_path, "r") as docx:
