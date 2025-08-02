@@ -67,11 +67,6 @@ if uploaded_files:
         # 語句抽出
         terms = extract_terms(str(temp_path), override_dict)
 
-        # 📘 語句と読みの表示（確認用）
-        st.write("📘 抽出語句と読み:")
-        for term in terms:
-            st.write(f"・{term.get('word', '')} → {term.get('reading', '')}")
-
         # ✏️ 編集UIを追加
         st.write("✏️ 抽出語句の編集")
         df_terms = pd.DataFrame(terms)
