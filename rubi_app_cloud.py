@@ -39,9 +39,17 @@ uploaded_files = st.file_uploader("📄 処理対象の Word ファイル（.doc
 if uploaded_files:
     for uploaded_file in uploaded_files:
         st.subheader(f"📄 処理中: {uploaded_file.name}")
+        # ✅ ここで辞書を安全に参照
+        override_dict = st.session_state.override_dict
+        
+        # ✅ 一時ファイルとして保存
+        import tempfile
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".docx") as tmp:
+            tmp.write(uploaded_file.getbuffer())
+            tmp_path = tmp.name
 
         # 語句抽出（バイトデータを直接渡す）
-        terms = extract_terms(uploaded_file, override_dict)
+        terms = extract_terms(tmp_path, override_dict)
 
         # ✏️ 抽出語句の編集
         st.subheader("📘 抽出語句の編集")
