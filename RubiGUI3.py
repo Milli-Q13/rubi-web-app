@@ -231,13 +231,14 @@ class RubyEditorApp:
         save_dir = os.path.join(project_dir, "ルビデータ")
         os.makedirs(save_dir, exist_ok=True)
 
-        tsv_path = os.path.join(save_dir, f"{base_name}（ルビ）.tsv")
+        tsv_path = os.path.join(save_dir, f"{base_name}.tsv")
 
         with open(tsv_path, "w", encoding="cp932") as f:
             for word, reading in self.data:
                 f.write(f"{word}\t{reading}\n")
 
         messagebox.showinfo("保存完了", f"TSVファイルを保存しました：\n{tsv_path}")
+
 
     def load_override_dict(self):
         if os.path.exists("override.json"):
@@ -416,7 +417,7 @@ def save_tsv(terms, file_path):
     project_dir = Path(file_path).resolve().parent.parent
     save_dir = project_dir / "ルビデータ"
     save_dir.mkdir(exist_ok=True)
-    tsv_path = save_dir / f"{base_name}（ルビ）.tsv"
+    tsv_path = save_dir / f"{base_name}.tsv"
 
     with open(tsv_path, "w", encoding="cp932") as f:
         for term in terms:
@@ -479,5 +480,4 @@ if __name__ == "__main__":
     root = TkinterDnD.Tk()
     app = RubyEditorApp(root)
     root.mainloop()
-
 

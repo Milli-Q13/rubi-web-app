@@ -1,7 +1,5 @@
 streamlit
+tkinterdnd2
 jaconv
 sudachipy
-sudachipy
-sudachidict_core
-
-
+pywin32

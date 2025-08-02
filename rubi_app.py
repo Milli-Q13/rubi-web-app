@@ -1,112 +1,92 @@
 import streamlit as st
-import zipfile
-import xml.etree.ElementTree as ET
-import jaconv
-import json
-import os
 from pathlib import Path
-from sudachipy import tokenizer, dictionary
+import os
+import json
+import pandas as pd
+from RubiGUI3 import extract_terms
 
-# Sudachi初期化
-tokenizer_obj = dictionary.Dictionary(dict_type="core").create()
-mode = tokenizer.Tokenizer.SplitMode.C
+st.title("語句抽出＆TSV出力ツール（複数ファイル対応）")
 
-# override辞書の読み込み
-def load_override_dict():
-    if os.path.exists("override.json"):
-        with open("override.json", "r", encoding="utf-8") as f:
-            return json.load(f)
-    return {}
+# 📚 辞書の読み込み（アップロード or 既存ファイル）
+override_dict = {}
+default_dict_path = Path(__file__).parent / "override.json"
 
-# override辞書の保存
-def save_override_dict(override_dict):
-    with open("override.json", "w", encoding="utf-8") as f:
-        json.dump(override_dict, f, ensure_ascii=False, indent=2)
+uploaded_dict_file = st.file_uploader("📚 ルビ辞書（override.json）をアップロード", type=["json"])
 
-# 語句抽出関数
-def extract_terms(file_path, override_dict):
-    with zipfile.ZipFile(file_path, "r") as docx:
-        with docx.open("word/document.xml") as file:
-            tree = ET.parse(file)
-            root = tree.getroot()
-            ns = {"w": "http://schemas.openxmlformats.org/wordprocessingml/2006/main"}
-            texts = [node.text for node in root.findall(".//w:t", ns) if node.text]
+if uploaded_dict_file:
+    try:
+        override_dict = json.load(uploaded_dict_file)
+        st.success(f"{len(override_dict)} 件の語句をアップロード辞書から読み込みました")
+    except Exception as e:
+        st.error(f"アップロード辞書の読み込みに失敗しました: {e}")
+elif default_dict_path.exists():
+    try:
+        with open(default_dict_path, "r", encoding="utf-8") as f:
+            override_dict = json.load(f)
+        st.info(f"既存の辞書（{default_dict_path}）を読み込みました")
+    except Exception as e:
+        st.error(f"既存辞書の読み込みに失敗しました: {e}")
 
-    full_text = "".join(texts)
-    words = {}
+# ✏️ 辞書編集UI（読み込み後に表示）
+st.subheader("📝 辞書の編集")
+st.write("✅ override_dict の中身:", override_dict)
+st.write("✅ DataFrame に変換する前:", [{"語句": k, "読み": v} for k, v in override_dict.items()])
+edited_dict = pd.DataFrame(
+    [{"語句": k, "読み": v} for k, v in override_dict.items()]
+)
+edited_df = st.data_editor(edited_dict, num_rows="dynamic")
 
-    for m in tokenizer_obj.tokenize(full_text, mode):
-        surface = m.surface()
-        if len(surface) <= 1 or surface in words:
-            continue
-        if all('\u3040' <= ch <= '\u309F' for ch in surface):
-            continue
-        if surface in override_dict:
-            reading = override_dict[surface]
-        else:
-            reading = jaconv.kata2hira(m.reading_form())
-        if surface == reading:
-            continue
-        words[surface] = reading
+# 💾 保存ボタン
+if st.button("辞書を保存（override.json に上書き）"):
+    try:
+        new_dict = {row["語句"]: row["読み"] for _, row in edited_df.iterrows() if row["語句"]}
+        with open(default_dict_path, "w", encoding="utf-8") as f:
+            json.dump(new_dict, f, ensure_ascii=False, indent=2)
+        override_dict = new_dict
+        st.success("辞書を保存しました！")
+    except Exception as e:
+        st.error(f"保存に失敗しました: {e}")
 
-    return [{"word": w, "reading": r} for w, r in words.items()]
-
-# TSV保存
-def save_tsv(terms, file_name):
-    base_name = Path(file_name).stem
-    save_dir = Path("ルビデータ")
-    save_dir.mkdir(exist_ok=True)
-    tsv_path = save_dir / f"{base_name}（ルビ）.tsv"
-
-    with open(tsv_path, "w", encoding="cp932") as f:
-        for term in terms:
-            f.write(f"{term['word']}\t{term['reading']}\n")
-    return tsv_path
-
-# Streamlit UI
-st.title("📘 ルビ編集ツール（Streamlit版）")
-
-override_dict = load_override_dict()
-
-uploaded_files = st.file_uploader("Wordファイルをアップロード（複数可）", type=["docx"], accept_multiple_files=True)
+# 📄 ファイルのアップロード
+uploaded_files = st.file_uploader("📄 処理対象の Word ファイル（.docx）を選択", type=["docx"], accept_multiple_files=True)
 
 if uploaded_files:
-    for i, uploaded_file in enumerate(uploaded_files):
-        st.markdown(f"### 📄 {uploaded_file.name}")
+    temp_dir = Path("temp_files")
+    temp_dir.mkdir(exist_ok=True)
 
-        file_bytes = uploaded_file.read()
-        temp_path = Path(f"temp_{i}.docx")  # 一時ファイル名をユニークに
+    for uploaded_file in uploaded_files:
+        st.subheader(f"📄 処理中: {uploaded_file.name}")
 
+        # 一時保存
+        temp_path = temp_dir / uploaded_file.name
         with open(temp_path, "wb") as f:
-            f.write(file_bytes)
+            f.write(uploaded_file.getbuffer())
 
-        terms = extract_terms(temp_path, override_dict)
-        st.success(f"{len(terms)} 件の語句を抽出しました")
+        # 語句抽出
+        terms = extract_terms(str(temp_path), override_dict)
 
-        edited_terms = st.data_editor(
-            terms,
-            column_config={
-                "word": "語句",
-                "reading": "読み"
-            },
-            num_rows="dynamic",
-            key=f"editor_{i}"  # 複数エディタにユニークキーを
-        )
+        # 📘 語句と読みの表示（確認用）
+        st.write("📘 抽出語句と読み:")
+        for term in terms:
+            st.write(f"・{term.get('word', '')} → {term.get('reading', '')}")
 
+        # TSV生成
+        tsv_path = str(temp_path).replace(".docx", ".tsv")
+        with open(tsv_path, "w", encoding="cp932") as f:
+            for term in terms:
+                f.write(f"{term.get('word', '')}\t{term.get('reading', '')}\n")
 
-    if st.button("📄 TSV保存"):
-        tsv_path = save_tsv(edited_terms, uploaded_file.name)
-        st.info(f"保存完了：{tsv_path}")
+        st.success(f"{uploaded_file.name} の語句抽出完了！")
+        st.write(f"抽出語句数: {len(terms)}")
 
-    st.markdown("---")
-    st.subheader("📚 辞書編集（override.json）")
-
-    dict_items = [{"word": k, "reading": v} for k, v in override_dict.items()]
-    edited_dict = st.data_editor(dict_items, num_rows="dynamic")
-
-    if st.button("💾 辞書保存"):
-        new_dict = {item["word"]: item["reading"] for item in edited_dict if item["word"] and item["reading"]}
-        save_override_dict(new_dict)
-        st.success("辞書を保存しました")
-
-
+        # ダウンロードボタン
+        if os.path.exists(tsv_path):
+            with open(tsv_path, "rb") as f:
+                st.download_button(
+                    label=f"{uploaded_file.name} のTSVをダウンロード",
+                    data=f.read(),
+                    file_name=Path(tsv_path).name,
+                    mime="text/tab-separated-values"
+                )
+        else:
+            st.error(f"TSVファイルが見つかりませんでした: {tsv_path}")
