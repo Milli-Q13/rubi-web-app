@@ -29,8 +29,6 @@ elif default_dict_path.exists():
 
 # ✏️ 辞書編集UI（読み込み後に表示）
 st.subheader("📝 辞書の編集")
-st.write("✅ override_dict の中身:", override_dict)
-st.write("✅ DataFrame に変換する前:", [{"語句": k, "読み": v} for k, v in override_dict.items()])
 edited_dict = pd.DataFrame(
     [{"語句": k, "読み": v} for k, v in override_dict.items()]
 )
