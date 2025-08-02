@@ -86,9 +86,6 @@ if uploaded_files:
             for term in terms:
                 f.write(f"{term.get('word', '')}\t{term.get('reading', '')}\n")
 
-        st.success(f"{uploaded_file.name} の語句抽出完了！")
-        st.write(f"抽出語句数: {len(terms)}")
-
         # ダウンロードボタン
         if os.path.exists(tsv_path):
             with open(tsv_path, "rb") as f:
