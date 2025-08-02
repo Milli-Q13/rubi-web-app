@@ -27,10 +27,16 @@ edited_dict_df = st.data_editor(df_dict, num_rows="dynamic")
 # 💾 辞書保存（セッション内）
 if st.button("辞書を更新（セッション内）"):
     try:
-        override_dict = {row["語句"]: row["読み"] for _, row in edited_dict_df.iterrows() if row["語句"]}
+        # 🔧 編集後の DataFrame を辞書に変換
+        override_dict = {
+            row["語句"]: row["読み"]
+            for _, row in edited_dict_df.iterrows()
+            if row["語句"] and row["読み"]
+        }
         st.success("辞書を更新しました！（セッション内）")
     except Exception as e:
         st.error(f"更新に失敗しました: {e}")
+
 
 # 📄 Wordファイルのアップロード
 uploaded_files = st.file_uploader("📄 処理対象の Word ファイル（.docx）を選択", type=["docx"], accept_multiple_files=True)
