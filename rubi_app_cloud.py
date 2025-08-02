@@ -6,36 +6,31 @@ from rubi_core import extract_terms
 # 🏷️ タイトル
 st.title("語句抽出＆TSV出力ツール（Streamlit Cloud対応）")
 
-# 📚 辞書のアップロード（任意）
-uploaded_dict_file = st.file_uploader("📚 ルビ辞書（override.json）をアップロード", type=["json"])
+# 初期化
+if "override_dict" not in st.session_state:
+    st.session_state.override_dict = {}
+
+# 📚 辞書アップロード
+uploaded_dict_file = st.file_uploader("📚 あなたの override.json をアップロード", type=["json"])
 if uploaded_dict_file:
     try:
-        override_dict = json.load(uploaded_dict_file)
-        st.success(f"{len(override_dict)} 件の語句をアップロード辞書から読み込みました")
+        st.session_state.override_dict = json.load(uploaded_dict_file)
+        st.success(f"{len(st.session_state.override_dict)} 件の語句を読み込みました")
     except Exception as e:
-        override_dict = {}
-        st.error(f"アップロード辞書の読み込みに失敗しました: {e}")
-else:
-    override_dict = {}
-    st.info("辞書が未アップロードのため、空の辞書で処理します")
+        st.error(f"辞書の読み込みに失敗しました: {e}")
 
-# ✏️ 辞書編集UI
-st.subheader("📝 辞書の編集")
-df_dict = pd.DataFrame([{"語句": k, "読み": v} for k, v in override_dict.items()])
+# ✏️ 編集UI
+df_dict = pd.DataFrame([{"語句": k, "読み": v} for k, v in st.session_state.override_dict.items()])
 edited_dict_df = st.data_editor(df_dict, num_rows="dynamic")
 
-# 💾 辞書保存（セッション内）
-if st.button("辞書を更新（セッション内）"):
-    try:
-        # 🔧 編集後の DataFrame を辞書に変換
-        override_dict = {
-            row["語句"]: row["読み"]
-            for _, row in edited_dict_df.iterrows()
-            if row["語句"] and row["読み"]
-        }
-        st.success("辞書を更新しました！（セッション内）")
-    except Exception as e:
-        st.error(f"更新に失敗しました: {e}")
+# 💾 保存（セッション内）
+if st.button("辞書を更新"):
+    st.session_state.override_dict = {
+        row["語句"]: row["読み"]
+        for _, row in edited_dict_df.iterrows()
+        if row["語句"] and row["読み"]
+    }
+    st.success("辞書を更新しました！（セッション内）")
 
 
 # 📄 Wordファイルのアップロード
