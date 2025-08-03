@@ -1,11 +1,55 @@
+
 import streamlit as st
 import json
 import pandas as pd
 from rubi_core import extract_terms
+import tempfile
 
 # 🏷️ タイトル
 st.title("語句抽出＆TSV出力ツール（Streamlit Cloud対応）")
 
+# 📘 使い方ガイド（簡易表示）
+with st.expander("📘 アプリの使い方（簡易ガイド）"):
+    st.markdown("""
+### 🧑‍🏫 基本の流れ
+1. `override.json`（語句と読み仮名の辞書）をアップロード（任意）
+2. Wordファイル（.docx）をアップロード
+3. 語句抽出結果を編集
+4. TSVファイルをダウンロード
+
+### 📂 フォルダ構成（推奨）
+
+```plaintext
+デスクトップ/
+└── ルビ振り/
+    ├── override.json
+    ├── ルビデータ/
+    └── 出力（ルビ付き）/
+```
+""")
+# 📥 TSVファイルの扱い
+with st.expander("📥 TSVファイルの扱い"):
+    st.markdown("""
+- ダウンロード後、TSVファイルを「ルビデータ」フォルダに手動で移動してください
+""")
+
+# 🧩 VBA連携案内
+with st.expander("🧩 Word VBAとの連携方法"):
+    st.markdown("""
+このアプリで生成したTSVファイルを使って、Word文書にルビ（ふりがな）を自動挿入できます。
+
+### 🔧 マクロの準備
+- Wordを開き、対象の `.docx` ファイルを開く  
+- 「開発」タブ → 「Visual Basic」からVBAエディタを開く  
+- 「Normal」テンプレートの標準モジュールにマクロを貼り付け
+
+### 🔄 実行の流れ
+- マクロ名：`InsertFuriganaFromTSV_SaveToNewFile_Stable`  
+- 処理後のファイルは `出力（ルビ付き）` フォルダに保存されます
+
+👉 詳しい説明はこちら：[GitHubのREADMEを見る](https://github.com/Milli-Q13/rubi-web-app/blob/main/README.md)
+""")     
+ 
 # 初期化
 if "override_dict" not in st.session_state:
     st.session_state.override_dict = {}
