@@ -46,17 +46,13 @@
 | 処理対象ファイル | .docx | 語句抽出対象のWord文書 | 
 | 出力ファイル | .tsv | 語句と読み仮名のタブ区切りテキスト | 
 
-
-
 🗂️ 作業フォルダ構成（Streamlit → VBA連携）
 TSVファイルを使ってWord VBAでルビ振りを行う場合、以下のようなフォルダ構成を推奨します：
 デスクトップ/
 └── ルビ振り/
-    ├── override.json              # 読み仮名辞書（Streamlitアプリで編集・保存）
-    ├── ルビデータ/                # Streamlitアプリで出力されたTSVファイルを保存
-    └── 出力（ルビ付き）/         # Word VBAで処理されたルビ付きWordファイルの保存先
-
-
+    ├── override.json      # 読み仮名辞書（Streamlitアプリで編集・保存）
+    ├── ルビデータ/          # Streamlitアプリで出力されたTSVファイルを保存
+    └── 出力（ルビ付き）/    # Word VBAで処理されたルビ付きWordファイルの保存先
 
 🔄 Streamlit → VBA の連携フロー
 - Streamlitアプリで .docx ファイルをアップロードし、TSVファイルを生成
@@ -81,39 +77,31 @@ Sub InsertFuriganaFromTSV_SaveToNewFile_Stable()
     Dim LineData As String, WordParts() As String
     Dim TargetWord As String, Furigana As String
     Dim rng As Range
-
     Set docOriginal = ActiveDocument
     docName = docOriginal.Name
     nameOnly = Left(docName, InStrRev(docName, ".") - 1)
     extOnly = Mid(docName, InStrRev(docName, "."))
-
     Set fso = CreateObject("Scripting.FileSystemObject")
     basePath = fso.GetParentFolderName(docOriginal.Path)
-
     Set docNew = Documents.Add
     docNew.Content.FormattedText = docOriginal.Content.FormattedText
-
     tsvPath = basePath & "\ルビデータ\" & nameOnly & ".tsv"
     If Dir(tsvPath) = "" Then
         MsgBox "TSVファイルが見つかりません：" & vbCrLf & tsvPath, vbCritical
         Exit Sub
     End If
-
     If Not fso.FolderExists(basePath & "\出力（ルビ付き）") Then
         fso.CreateFolder basePath & "\出力（ルビ付き）"
     End If
     savePath = basePath & "\出力（ルビ付き）\" & nameOnly & "（ルビ）" & extOnly
-
     FileNum = FreeFile
     Open tsvPath For Input As FileNum
     Do Until EOF(FileNum)
         Line Input #FileNum, LineData
         WordParts = Split(LineData, vbTab)
-
         If UBound(WordParts) = 1 Then
             TargetWord = WordParts(0)
             Furigana = WordParts(1)
-
             Set rng = docNew.Range(0, 0)
             With rng.Find
                 .Text = TargetWord
@@ -122,7 +110,6 @@ Sub InsertFuriganaFromTSV_SaveToNewFile_Stable()
                 .MatchWholeWord = False
                 .MatchCase = False
             End With
-
             Do While rng.Find.Execute
                 rng.PhoneticGuide Text:=Furigana, Alignment:=wdPhoneticGuideAlignmentCenter, _
                     Raise:=12, FontSize:=6, FontName:="MS Mincho"
@@ -132,7 +119,6 @@ Sub InsertFuriganaFromTSV_SaveToNewFile_Stable()
         End If
     Loop
     Close FileNum
-
     docNew.SaveAs2 FileName:=savePath, FileFormat:=wdFormatXMLDocument
 End Sub
 
